@@ -1,0 +1,29 @@
+{
+  "success": true,
+  "users": [
+    {
+      "id": "1",
+      "name": "Amit Sharma",
+      "email": "amit@kipplo.com",
+      "role": "Admin",
+      "status": "Active",
+      "joinedAt": "2024-08-10"
+    },
+    {
+      "id": "2",
+      "name": "Priya Verma",
+      "email": "priya@kipplo.com",
+      "role": "Manager",
+      "status": "Active",
+      "joinedAt": "2024-09-05"
+    },
+    {
+      "id": "3",
+      "name": "Rahul Mehta",
+      "email": "rahul@kipplo.com",
+      "role": "Employee",
+      "status": "Inactive",
+      "joinedAt": "2024-07-20"
+    }
+  ]
+}
