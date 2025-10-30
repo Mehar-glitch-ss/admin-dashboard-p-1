@@ -11,7 +11,7 @@ const Sidebar = () => {
   ];
 
   return (
-    <div className="w-64 h-screen bg-gray-900 text-white flex flex-col fixed">
+    <div className="w-64 h-screen bg-purple-50 text-stone-500 flex flex-col fixed">
       <div className="text-2xl font-bold p-4 border-b border-gray-700">
         Kipplo Admin
       </div>
@@ -22,7 +22,7 @@ const Sidebar = () => {
               to={item.path}
               className={({ isActive }) =>
                 `block px-4 py-2 rounded-lg ${
-                  isActive ? "bg-gray-700" : "hover:bg-gray-800"
+                  isActive ? "bg-purple-200" : "hover:bg-purple-300"
                 }`
               }
             >

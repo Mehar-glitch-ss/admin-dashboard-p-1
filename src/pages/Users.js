@@ -1,44 +1,74 @@
-// src/pages/Users.jsx
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchUsers } from "../redux/slices/userSlice";
-import {
-  Search,
-  Eye,
-  Ban,
-  Trash2,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { fetchUsers } from "../redux/slices/userSlice"; // adjust path if needed
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const Users = () => {
   const dispatch = useDispatch();
   const { list, loading, error } = useSelector((state) => state.users);
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filteredUsers, setFilteredUsers] = useState([]);
+  //pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  // ✅ Fetch users when component mounts
+  // Inputs (controlled live)
+  const [searchInput, setSearchInput] = useState("");
+  const [roleInput, setRoleInput] = useState("all");
+  const [statusInput, setStatusInput] = useState("all");
+
+  // Applied filters (triggered by button)
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedRole, setSelectedRole] = useState("all");
+  const [selectedStatus, setSelectedStatus] = useState("all");
+
+  // Fetch users on mount
   useEffect(() => {
     dispatch(fetchUsers());
   }, [dispatch]);
 
-  // ✅ Filter users dynamically
-  useEffect(() => {
-    if (Array.isArray(list)) {
-      const filtered = list.filter(
-        (user) =>
-          user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.email?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredUsers(filtered);
-      setCurrentPage(1); // reset to first page when search changes
-    }
-  }, [list, searchTerm]);
+  // Filtering logic (applied only after button click)
+  const filteredUsers = useMemo(() => {
+    if (!Array.isArray(list)) return [];
 
-  // ✅ Pagination setup
-  const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+    // If no filters are applied, don’t show anything yet
+    if (
+      searchTerm.trim() === ""
+      // selectedRole === "all" &&
+      // selectedStatus === "all"
+    ) {
+      return [];
+    }
+
+    return list.filter((user) => {
+      const matchesSearch =
+        searchTerm.trim() === "" ||
+        user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesRole = selectedRole === "all" || user.role === selectedRole;
+
+      const matchesStatus =
+        selectedStatus === "all" || user.status === selectedStatus;
+
+      return matchesSearch && matchesRole && matchesStatus;
+    });
+  }, [list, searchTerm, selectedRole, selectedStatus]);
+
+  // Handlers
+  const handleApplyFilters = () => {
+    setSearchTerm(searchInput);
+    setSelectedRole(roleInput);
+    setSelectedStatus(statusInput);
+  };
+
+  const handleClearFilters = () => {
+    setSearchInput("");
+    setRoleInput("all");
+    setStatusInput("all");
+    setSearchTerm("");
+    setSelectedRole("all");
+    setSelectedStatus("all");
+  };
 
   const totalPages = Math.ceil(filteredUsers.length / rowsPerPage);
   const indexOfLastUser = currentPage * rowsPerPage;
@@ -48,89 +78,89 @@ const Users = () => {
   const handlePrev = () => {
     if (currentPage > 1) setCurrentPage(currentPage - 1);
   };
-
   const handleNext = () => {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
   };
-
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">User Management</h2>
-
-      {/* 🔍 Search Bar */}
-      <div className="flex items-center bg-white p-3 rounded-xl shadow-md w-full max-w-md mb-6">
-        <Search className="text-gray-500 mr-2" />
-        <input
-          type="text"
-          placeholder="Search users..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full outline-none text-gray-700"
-        />
+    <div className="p-6 m-0 h-screen bg-purple-200 rounded-lg">
+      <div className="sticky top-0 z-10 bg-purple-100 mt-0 h-12 border-b border-purple-500 flex items-start shadow-md rounded">
+        <h2 className=" font-semibold  mt-2 text-sm text-normal text-center ml-4 ">
+          User Management
+        </h2>
       </div>
 
-      {/* 🔄 Loading/Error States */}
-      {loading && <p className="text-gray-600">Loading users...</p>}
-      {error && <p className="text-red-600">Error: {error}</p>}
+      {/* Filter Controls */}
+      <div className="flex flex-wrap items-center gap-3 mb-6 mt-2 sticky top-0 z-2">
+        <input
+          type="text"
+          placeholder="Search by name or email"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          className="border p-2 rounded w-60"
+        />
 
-      {/* 📋 Users Table */}
-      {!loading && currentUsers.length > 0 ? (
-        <div className="bg-white shadow-md rounded-xl overflow-hidden">
-          <table className="min-w-full text-left">
-            <thead className="bg-gray-100 text-gray-700 text-sm uppercase">
-              <tr>
-                <th className="py-3 px-4">Name</th>
-                <th className="py-3 px-4">Email</th>
-                <th className="py-3 px-4">Role</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4 text-center">Actions</th>
+        <select
+          value={roleInput}
+          onChange={(e) => setRoleInput(e.target.value)}
+          className="border p-2 rounded"
+        >
+          <option value="all">All Roles</option>
+          <option value="admin">Admin</option>
+          <option value="user">User</option>
+        </select>
+
+        <select
+          value={statusInput}
+          onChange={(e) => setStatusInput(e.target.value)}
+          className="border p-2 rounded"
+        >
+          <option value="all">All Status</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+
+        <button
+          onClick={handleApplyFilters}
+          className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
+        >
+          Apply Filters
+        </button>
+
+        <button
+          onClick={handleClearFilters}
+          className="bg-gray-300 text-black px-4 py-2 rounded hover:bg-gray-400"
+        >
+          Clear
+        </button>
+      </div>
+
+      {/* Loading and Error States */}
+      {loading && <p>Loading users...</p>}
+      {error && <p className="text-red-500">Error: {error}</p>}
+
+      {/* Render Filtered Users */}
+      {!loading && filteredUsers.length > 0 ? (
+        <>
+          <table className="w-full border-collapse border border-gray-300">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="border p-2">Name</th>
+                <th className="border p-2">Email</th>
+                <th className="border p-2">Role</th>
+                <th className="border p-2">Status</th>
               </tr>
             </thead>
             <tbody>
               {currentUsers.map((user) => (
-                <tr key={user.id} className="border-t hover:bg-gray-50">
-                  <td className="py-3 px-4 font-medium text-gray-800">
-                    {user.name}
-                  </td>
-                  <td className="py-3 px-4">{user.email}</td>
-                  <td className="py-3 px-4">{user.role}</td>
-                  <td className="py-3 px-4">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        user.status === "Active"
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {user.status}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-center flex items-center justify-center gap-3">
-                    <button
-                      className="p-2 rounded-lg bg-blue-100 hover:bg-blue-200"
-                      title="View"
-                    >
-                      <Eye className="text-blue-600 w-5 h-5" />
-                    </button>
-                    <button
-                      className="p-2 rounded-lg bg-yellow-100 hover:bg-yellow-200"
-                      title="Suspend"
-                    >
-                      <Ban className="text-yellow-600 w-5 h-5" />
-                    </button>
-                    <button
-                      className="p-2 rounded-lg bg-red-100 hover:bg-red-200"
-                      title="Delete"
-                    >
-                      <Trash2 className="text-red-600 w-5 h-5" />
-                    </button>
-                  </td>
+                <tr key={user.id} className="hover:bg-gray-50 rounded">
+                  <td className="border p-2">{user.name}</td>
+                  <td className="border p-2">{user.email}</td>
+                  <td className="border p-2">{user.role}</td>
+                  <td className="border p-2">{user.status}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-
-          {/* 🔢 Pagination Controls */}
           <div className="flex items-center justify-between p-4 bg-gray-50">
             <div className="text-gray-600 text-sm">
               Page <strong>{currentPage}</strong> of{" "}
@@ -160,29 +190,33 @@ const Users = () => {
               >
                 <ChevronRight size={18} />
               </button>
-            </div>
-
-            {/* Rows per page dropdown */}
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <span>Rows:</span>
-              <select
-                value={rowsPerPage}
-                onChange={(e) => {
-                  setRowsPerPage(Number(e.target.value));
-                  setCurrentPage(1);
-                }}
-                className="border rounded-lg px-2 py-1 outline-none"
-              >
-                <option value={5}>5</option>
-                <option value={10}>10</option>
-                <option value={20}>20</option>
-              </select>
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <span>Rows:</span>
+                <select
+                  value={rowsPerPage}
+                  onChange={(e) => {
+                    setRowsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="border rounded-lg px-2 py-1 outline-none"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                </select>
+              </div>
             </div>
           </div>
-        </div>
+        </>
       ) : (
         !loading && (
-          <div className="p-4 text-center text-gray-500">No users found.</div>
+          <p className="text-gray-500 text-center mt-4">
+            {searchTerm.trim() === "" &&
+            selectedRole === "all" &&
+            selectedStatus === "all"
+              ? "Use filters and click 'Apply Filters' to see results."
+              : "No users found for the selected filters."}
+          </p>
         )
       )}
     </div>
